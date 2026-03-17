@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
 
 /* General */
 
@@ -10,7 +10,7 @@
 body {
   margin: 0;
   padding: 0;
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
   color: #000000;
   background-color: #ffffff;
 }
@@ -192,7 +192,7 @@ body {
   opacity: 0.9;
 }
 
-.hero-down h4{
+.hero-down h4 {
   margin: 0;
   color: #6c6c6c;
 }
@@ -407,7 +407,7 @@ body {
   margin: 0 auto;
 }
 
-.btn{
+.btn {
   background-color: #063039;
   color: white;
   padding: 5px 10px;
@@ -416,7 +416,7 @@ body {
   transition: background 0.3s;
 }
 
-.btn:hover{
+.btn:hover {
   background-color: white;
   color: #063039;
   border: 2px solid #063039;
@@ -439,10 +439,12 @@ body {
   padding: 12px 18px;
   border-radius: 10px;
   font-size: 0.9rem;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
   z-index: 1000;
   opacity: 1;
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
 }
 
 .custom-alert.hidden {
@@ -450,7 +452,6 @@ body {
   transform: translateY(10px);
   pointer-events: none;
 }
-
 
 /* Job Cards Layout */
 .results-container {
@@ -462,22 +463,20 @@ body {
 }
 
 .job-card {
-  background: #000414;
+  background-color: #000414;
   display: flex;
   flex-direction: column;
   justify-content: center;
   color: white;
   border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  /* box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); */
   padding: 20px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  transition: transform 0.3s;
 }
 
 .job-card:hover {
-  transform: translateY(-4px);
-  background: linear-gradient(90deg, #000414, #063039);
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
-  color: white;
+  transform: translateY(-6px) scale(1.03);
+  background-color: #063039;
 }
 
 .job-header {
@@ -486,7 +485,7 @@ body {
   align-items: center;
 }
 
-.job-header-main{
+.job-header-main {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -541,7 +540,7 @@ body {
   
 } */
 
-.job-details-block{
+.job-details-block {
   display: flex;
   flex-direction: column;
 }
@@ -580,7 +579,6 @@ body {
   cursor: pointer;
   line-height: 1;
   transition: background 0.3s;
-
 }
 
 .add-btn:hover {
@@ -588,7 +586,7 @@ body {
   color: white;
 }
 
-.job-add{
+.job-add {
   border-radius: 20px;
   border: none;
   padding: 10px 10px;
@@ -600,9 +598,168 @@ body {
   margin-left: auto;
 }
 
-.job-add:hover{
+.job-add:hover {
   background-color: white;
   color: #114a48;
+}
+
+/* Dashboard Page */
+/* ── Dashboard Layout ── */
+.dashboard-main {
+  display: flex;
+  gap: 24px;
+  padding: 20px;
+  align-items: flex-start;
+}
+
+.dashboard-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dashboard-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Dash Cards ── */
+.dash-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.dash-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.dash-card h3 {
+  margin: 0 0 14px 0;
+  font-size: 16px;
+  color: #333;
+}
+
+/* ── Lists ── */
+.dash-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dash-list-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
+
+.dash-item-text {
+  flex: 1;
+  font-size: 14px;
+  color: #333;
+}
+
+.done-text {
+  text-decoration: line-through;
+  color: #aaa;
+}
+
+.completed-item {
+  background: #f0fff0;
+  border-color: #c8e6c9;
+}
+
+/* ── Buttons ── */
+.remove-btn {
+  background: none;
+  border: none;
+  color: #e53935;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.remove-btn:hover {
+  background: #ffebee;
+}
+
+.skill-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #4caf50;
+}
+
+/* ── Badge ── */
+.badge {
+  background: #ff7043;
+  color: white;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+}
+
+/* ── Stats Grid ── */
+.stats-grid {
+  display: flex;
+  gap: 16px;
+  padding: 20px 20px 0 20px;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  flex: 1;
+  min-width: 120px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.stat-card h3 {
+  font-size: 13px;
+  color: #888;
+  margin: 0 0 8px 0;
+}
+
+.stat-card p {
+  font-size: 28px;
+  font-weight: bold;
+  color: #333;
+  margin: 0;
+}
+
+/* ── Empty Message ── */
+.empty-msg {
+  color: #aaa;
+  font-size: 14px;
+  text-align: center;
+  padding: 10px 0;
+}
+
+.empty-msg a {
+  color: #5c6bc0;
+}
+
+/* ── Chart Cards ── */
+.chart-card {
+  min-height: 280px;
 }
 
 /* About Page */
@@ -663,7 +820,7 @@ body {
 
 footer {
   background: #000000;
-  color: #EE6983;
+  color: #ee6983;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -705,7 +862,6 @@ footer {
 }
 
 @media (max-width: 480px) {
-
   /* Navbar */
   .navbar {
     padding: 15px 20px;
@@ -783,7 +939,6 @@ footer {
 }
 
 @media (max-width: 768px) {
-
   /* Navbar */
   .navbar {
     padding: 20px 30px;
@@ -838,6 +993,11 @@ footer {
     padding: 0 10px;
   }
 
+
+    .dashboard-main {
+      flex-direction: column;
+    }
+
   /* About */
   .about-text {
     padding: 0 10px;
@@ -845,7 +1005,6 @@ footer {
 }
 
 @media (max-width: 1024px) {
-
   /* Navbar */
   .navbar {
     padding: 20px 40px;

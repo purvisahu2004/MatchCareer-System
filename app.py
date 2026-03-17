@@ -24,7 +24,7 @@ for col in ['Job Description', 'Certifications']:
 
 # -------- Skills Vectorizer -------- #
 
-SKILL_VECTORIZER_PATH = os.path.join("models", "tfidf_vectorizer.pkl")
+SKILL_VECTORIZER_PATH = os.path.join("models", "skill_vectorizer.pkl")
 SKILL_VECTOR_PATH = os.path.join("models", "skill_vectors.pkl")
 
 if os.path.exists(SKILL_VECTORIZER_PATH) and os.path.exists(SKILL_VECTOR_PATH):
@@ -69,7 +69,7 @@ def recommend_jobs(user_input, top_n=10):
     temp_data['Match_%'] = (similarity * 100).round(2)
 
     def find_missing(job_skills, user_skills):
-        job_skills_list = [s.strip() for s in str(job_skills).split(',') if s.strip()]
+        job_skills_list = [s.strip() for s in str(job_skills).lower().split(',') if s.strip()]
         missing = [s for s in job_skills_list if s.lower() not in user_skills]
         return ', '.join(missing) if missing else 'None'
 
@@ -129,7 +129,121 @@ def jobs():
 
 @app.route('/dashboard')
 def dashboard():
-    return render_template('dashboard.html')
+    todo = session.get('todo', [])
+    completed = session.get('completed', [])
+    target_jobs = session.get('target_jobs', [])
+    
+    total_skills = len(todo) + len(completed)
+    skills_acquired = len(completed)
+    missing_skills = len(todo)
+    
+    return render_template('dashboard.html',
+        todo=todo,
+        completed=completed,
+        target_jobs=target_jobs,
+        total_skills=total_skills,
+        skills_acquired=skills_acquired,
+        missing_skills=missing_skills,
+        total_jobs=len(target_jobs)
+    )
+
+@app.route('/mark-complete', methods=['POST'])
+def mark_complete():
+    req_data = request.get_json()
+    skill = req_data.get('skill')
+    
+    if not skill:
+        return jsonify({'status': 'error'}), 400
+    
+    if 'completed' not in session:
+        session['completed'] = []
+    
+    todo = session.get('todo', [])
+    if skill in todo:
+        todo.remove(skill)
+        session['todo'] = todo
+    
+    if skill not in session['completed']:
+        session['completed'].append(skill)
+    
+    session.modified = True
+    return jsonify({
+        'status': 'success',
+        'todo': session['todo'],
+        'completed': session['completed']
+    })
+
+@app.route('/mark-incomplete', methods=['POST'])
+def mark_incomplete():
+    req_data = request.get_json()
+    skill = req_data.get('skill')
+    
+    if not skill:
+        return jsonify({'status': 'error'}), 400
+
+    if 'todo' not in session:
+        session['todo'] = []
+
+    completed = session.get('completed', [])
+    if skill in completed:
+        completed.remove(skill)
+        session['completed'] = completed
+
+    if skill not in session['todo']:
+        session['todo'].append(skill)
+
+    session.modified = True
+    return jsonify({
+        'status': 'success',
+        'todo': session['todo'],
+        'completed': session['completed']
+    })
+
+@app.route('/remove-skill', methods=['POST'])
+def remove_skill():
+    req_data = request.get_json()
+    skill = req_data.get('skill')
+    
+    todo = session.get('todo', [])
+    completed = session.get('completed', [])
+    
+    if skill in todo:
+        todo.remove(skill)
+        session['todo'] = todo
+    if skill in completed:
+        completed.remove(skill)
+        session['completed'] = completed
+        
+    session.modified = True
+    return jsonify({'status': 'success'})
+
+@app.route('/remove-target-job', methods=['POST'])
+def remove_target_job():
+    req_data = request.get_json()
+    job = req_data.get('job_title')
+    
+    target_jobs = session.get('target_jobs', [])
+    if job in target_jobs:
+        target_jobs.remove(job)
+        session['target_jobs'] = target_jobs
+    
+    session.modified = True
+    return jsonify({'status': 'success'})
+
+@app.route('/get-session-data')
+def get_session_data():
+    todo = session.get('todo', [])
+    completed = session.get('completed', [])
+    target_jobs = session.get('target_jobs', [])
+    total = len(todo) + len(completed)
+    percent = round((len(completed) / total * 100), 1) if total > 0 else 0
+    
+    return jsonify({
+        'todo': todo,
+        'completed': completed,
+        'target_jobs': target_jobs,
+        'percent': percent
+    })
 
 @app.route('/about')
 def about():
@@ -182,8 +296,8 @@ def recommend_skills_api():
 
 @app.route("/add-to-todo", methods=["POST"])
 def add_to_todo():
-    data = request.get_json()
-    skill = data.get("skill")
+    data_json = request.get_json()
+    skill = data_json.get("skill")
 
     if not skill:
         return jsonify({"status": "error", "message": "No skill received"}), 400
@@ -203,8 +317,8 @@ def add_to_todo():
 
 @app.route("/add-target-job", methods=["POST"])
 def add_target_job():
-    data = request.get_json()
-    job_title = data.get("job_title")
+    data_json = request.get_json()
+    job_title = data_json.get("job_title")
 
     if not job_title:
         return jsonify({"status": "error", "message": "No job received"}), 400

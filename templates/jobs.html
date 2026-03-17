@@ -1,254 +1,289 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Job to Skills | CareerPath AI</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/styles.css') }}"
+    />
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Job to Skills | CareerPath AI</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-</head>
+  <body>
+    <div class="page-wrapper">
+      <!-- Navbar -->
+      <nav class="navbar">
+        <h1 class="logo">CareerPath AI</h1>
+        <ul class="nav-links">
+          <li>
+            <a
+              href="{{ url_for('index') }}"
+              class="{{ 'active' if request.endpoint == 'index' else '' }}"
+            >
+              Home
+            </a>
+          </li>
 
-<body>
-  <div class="page-wrapper">
+          <li>
+            <a
+              href="{{ url_for('jobs') }}"
+              class="{{ 'active' if request.endpoint == 'jobs' else '' }}"
+            >
+              Find Skills
+            </a>
+          </li>
 
-    <!-- Navbar -->
-    <nav class="navbar">
-      <h1 class="logo">CareerPath AI</h1>
-      <ul class="nav-links">
-        <li>
-          <a href="{{ url_for('index') }}" class="{{ 'active' if request.endpoint == 'index' else '' }}">
-            Home
-          </a>
-        </li>
+          <li>
+            <a
+              href="{{ url_for('skills') }}"
+              class="{{ 'active' if request.endpoint == 'skills' else '' }}"
+            >
+              Find Jobs
+            </a>
+          </li>
 
-        <li>
-          <a href="{{ url_for('jobs') }}" class="{{ 'active' if request.endpoint == 'jobs' else '' }}">
-            Find Skills
-          </a>
-        </li>
+          <li>
+            <a
+              href="{{ url_for('dashboard') }}"
+              class="{{ 'active' if request.endpoint == 'dashboard' else '' }}"
+            >
+              Dashboard
+            </a>
+          </li>
 
-        <li>
-          <a href="{{ url_for('skills') }}" class="{{ 'active' if request.endpoint == 'skills' else '' }}">
-            Find Jobs
-          </a>
-        </li>
+          <li>
+            <a
+              href="{{ url_for('about') }}"
+              class="{{ 'active' if request.endpoint == 'about' else '' }}"
+            >
+              About
+            </a>
+          </li>
+        </ul>
+        <button class="sign-btn">Sign Up / Login</button>
+      </nav>
 
-        <li>
-          <a href="{{ url_for('dashboard') }}" class="{{ 'active' if request.endpoint == 'dashboard' else '' }}">
-            Dashboard
-          </a>
-        </li>
+      <div class="main-content">
+        <!-- Header -->
+        <section class="page-header">
+          <h2>Find Skills for Your Dream Job</h2>
+          <p>
+            Enter a job title to discover the skills you need to master and
+            related job roles.
+          </p>
+        </section>
 
-        <li>
-          <a href="{{ url_for('about') }}" class="{{ 'active' if request.endpoint == 'about' else '' }}">
-            About
-          </a>
-        </li>
-      </ul>
-      <button class="sign-btn">Sign Up / Login</button>
-    </nav>
+        <!-- Search Section -->
+        <section class="content">
+          <div class="search-bar">
+            <input
+              type="text"
+              id="jobInput"
+              placeholder="Enter job title (e.g. Data Analyst)"
+            />
+            <input
+              type="number"
+              id="topN"
+              min="1"
+              max="10"
+              value="5"
+              class="topn-input"
+            />
+            <button class="btn" onclick="searchSkills()">Search</button>
+          </div>
 
-    <div class="main-content">
-      <!-- Header -->
-      <section class="page-header">
-        <h2>Find Skills for Your Dream Job</h2>
-        <p>Enter a job title to discover the skills you need to master and related job roles.</p>
-      </section>
-
-      <!-- Search Section -->
-      <section class="content">
-        <div class="search-bar">
-          <input type="text" id="jobInput" placeholder="Enter job title (e.g. Data Analyst)">
-          <input type="number" id="topN" min="1" max="10" value="5" class="topn-input">
-          <button class="btn" onclick="searchSkills()">Search</button>
-        </div>
-
-        <!-- Results -->
-        <div id="results" class="results-container"></div>
-      </section>
-    </div>
-
-    <div id="custom-alert" class="custom-alert hidden">
-      <span id="alert-text"></span>
-    </div>
-
-
-    <!-- Footer -->
-    <footer>
-      <p class="footer-logo">CareerPath AI</p>
-      <p id="year-text">©2025</p>
-      <div class="socials">
-        <a href="#">💼</a>
-        <a href="#">🔗</a>
-        <a href="#">✉️</a>
+          <!-- Results -->
+          <div id="results" class="results-container"></div>
+        </section>
       </div>
-    </footer>
 
-    <script>
-      async function searchSkills() {
-        const jobTitle = document.getElementById("jobInput").value.trim();
-        const topN = parseInt(document.getElementById("topN").value) || 5;
+      <div id="custom-alert" class="custom-alert hidden">
+        <span id="alert-text"></span>
+      </div>
 
-        if (!jobTitle) {
-          alert("Please enter a job title!");
-          return;
-        }
+      <!-- Footer -->
+      <footer>
+        <p class="footer-logo">CareerPath AI</p>
+        <p id="year-text">©2025</p>
+        <div class="socials">
+          <a href="#">💼</a>
+          <a href="#">🔗</a>
+          <a href="#">✉️</a>
+        </div>
+      </footer>
 
-        const response = await fetch("/recommend_skills", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ job_title: jobTitle })
-        });
+      <script>
+        async function searchSkills() {
+          const jobTitle = document.getElementById("jobInput").value.trim();
+          const topN = parseInt(document.getElementById("topN").value) || 5;
 
-        const data = await response.json();
-        const resultsDiv = document.getElementById("results");
-        resultsDiv.innerHTML = "";
-
-        if (!data["Recommended Skills"] || data["Recommended Skills"].length === 0) {
-          resultsDiv.innerHTML =
-            "<p class='no-results'>❌ No skills found for this job.</p>";
-          return;
-        }
-
-        /* ===== HELPER: missing skills renderer ===== */
-        function renderMissingSkills(skillsString) {
-          if (!skillsString || skillsString === "None") {
-            return '<span style="color:green;">None 🎉</span>';
+          if (!jobTitle) {
+            alert("Please enter a job title!");
+            return;
           }
 
-          return skillsString.split(",").map(skill => `
-      <span class="skill-tag">
-        ${skill.trim()}
-        <button class="add-btn"
-          onclick="this.disabled=true; addToTodo('${skill.trim()}')">+</button>
-      </span>
-    `).join("");
-        }
+          const response = await fetch("/recommend_skills", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ job_title: jobTitle }),
+          });
 
-        /* ===== REQUIRED SKILLS CARD (TOP) ===== */
-        resultsDiv.innerHTML += `
-    <div class="job-card highlight-card">
-      <div class="job-header">
-        <h3 class="job-title">
-          Skills required for ${data["Job Title"]}
-        </h3>
-        <button class="job-add"
-          onclick="addTargetJob('${data["Job Title"]}')">
-          ⭐ Add to Target Jobs
-        </button>
-      </div>
+          const data = await response.json();
+          const resultsDiv = document.getElementById("results");
+          resultsDiv.innerHTML = "";
 
-      <div class="skill-tags">
-        ${data["Recommended Skills"].map(skill => `
-          <span class="skill-tag">
-            ${skill}
-            <button class="add-btn"
-              onclick="this.disabled=true; addToTodo('${skill}')">+</button>
-          </span>
-        `).join("")}
-      </div>
-    </div>
-  `;
+          if (
+            !data["Recommended Skills"] ||
+            data["Recommended Skills"].length === 0
+          ) {
+            resultsDiv.innerHTML =
+              "<p class='no-results'>❌ No skills found for this job.</p>";
+            return;
+          }
 
-        /* ===== MATCHING JOBS (FULL DETAILS) ===== */
-        const jobs = data["Top Matching Jobs"] || [];
+          /* ===== HELPER: missing skills renderer ===== */
+          function renderMissingSkills(skillsString) {
+            if (!skillsString || skillsString === "None") {
+              return '<span style="color:green;">None 🎉</span>';
+            }
 
-        jobs.slice(0, topN).forEach((job, index) => {
-          const matchColor =
-            job["Match_%"] >= 80 ? "green" :
-              job["Match_%"] >= 50 ? "orange" : "red";
+            return skillsString
+              .split(",")
+              .map(
+                (skill) => `
+            <span class="skill-tag">
+              ${skill.trim()}
+              <button class="add-btn" onclick="this.disabled=true; addToTodo('${skill.trim()}')">+</button>
+            </span>
+            `,
+              )
+              .join("");
+          }
 
+          /* ===== REQUIRED SKILLS CARD (TOP) ===== */
           resultsDiv.innerHTML += `
-      <div class="job-card">
-        <div class="job-header">
-          <span class="job-number">#${index + 1}</span>
+          <div class="job-card highlight-card">
+            <div class="job-header">
+              <h3 class="job-title">
+                Skills required for ${data["Job Title"]}
+              </h3>
+              <button class="job-add"
+                onclick="addTargetJob('${data["Job Title"]}')">
+                ⭐ Add to Target Jobs
+              </button>
+            </div>
+
+            <div class="skill-tags">
+              ${data["Recommended Skills"]
+                .map(
+                  (skill) => `
+                <span class="skill-tag">
+                  ${skill}
+                  <button class="add-btn" onclick="this.disabled=true; addToTodo('${skill}')">+</button>
+                </span>
+              `,
+                )
+                .join("")}
+            </div>
+          </div>
+        `;
+
+          /* ===== MATCHING JOBS (FULL DETAILS) ===== */
+          const jobs = data["Top Matching Jobs"] || [];
+
+          jobs.slice(0, topN).forEach((job, index) => {
+            const matchColor =
+              job["Match_%"] >= 80
+                ? "green"
+                : job["Match_%"] >= 50
+                  ? "orange"
+                  : "red";
+
+            resultsDiv.innerHTML += `
+            <div class="job-card">
+              <div class="job-header">
+                <span class="job-number">#${index + 1}</span>
                 <div class="job-header-main">
-                  <h3 class="job-title">${job['Job Title']}</h3>
+                  <h3 class="job-title">${job["Job Title"]}</h3>
                   <button class="toggle-btn" onclick="toggleDetails(this)">Show Details</button>
-                  </div>
-          <span class="match-percent"
-            style="background-color:${matchColor}">
-            ${job["Match_%"]}%
-          </span>
-        </div>
+                </div>
+                <span class="match-percent"
+                  style="background-color:${matchColor}"> ${job["Match_%"]}%
+                </span>
+              </div>
 
               <div class="job-details" style="display:none;">
-                <p class='job-details-block'><h4 class='job-outline'>📄 Description:</h4>${job['Job Description'] || 'N/A'}</p>
-                <p class='job-details-block'><h4 class='job-outline'>🧠 Required Skills:</h4> ${job['Skills']}</p>
-                <p class='job-details-block'><h4 class='job-outline'>📜 Certifications:</h4> ${job['Certifications'] || 'N/A'}</p>
-          <button class="job-add"
-            onclick="addTargetJob('${job["Job Title"]}')">
-            ⭐ Add to Target Jobs
-          </button>
-        </div>
-      </div>
-    `;
-        });
-      }
-
-      /* ===== SHARED FUNCTIONS ===== */
-
-      function toggleDetails(button) {
-        const jobCard = button.closest(".job-card");
-        const details = jobCard.querySelector(".job-details");
-        if (details.style.display === "none") {
-          details.style.display = "block";
-          button.textContent = "Hide Details";
-        } else {
-          details.style.display = "none";
-          button.textContent = "Show Details";
+                <p class='job-details-block'><h4 class='job-outline'>📄 Description:</h4>${job["Job Description"] || "N/A"}</p>
+                <p class='job-details-block'><h4 class='job-outline'>🧠 Required Skills:</h4> ${job["Skills"]}</p>
+                <p class='job-details-block'><h4 class='job-outline'>📜 Certifications:</h4> ${job["Certifications"] || "N/A"}</p>
+                <button class="job-add" onclick="addTargetJob('${job["Job Title"]}')"> ⭐ Add to Target Jobs </button>
+              </div>
+            </div>
+          `;
+          });
         }
-      }
 
-      function addToTodo(skill) {
-        fetch("/add-to-todo", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ skill })
-        })
-          .then(res => res.json())
-          .then(data => {
-            console.log("Server response:", data);
-            showAlert(`"${skill}" added to your To-Do`);
+        /* ===== SHARED FUNCTIONS ===== */
+
+        function toggleDetails(button) {
+          const jobCard = button.closest(".job-card");
+          const details = jobCard.querySelector(".job-details");
+          if (details.style.display === "none") {
+            details.style.display = "block";
+            button.textContent = "Hide Details";
+          } else {
+            details.style.display = "none";
+            button.textContent = "Show Details";
+          }
+        }
+
+        function addToTodo(skill) {
+          fetch("/add-to-todo", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ skill }),
           })
-          .catch(err => {
-            console.error("Error:", err);
-            showAlert("Failed to add skill");
-          });
-      }
+            .then((res) => res.json())
+            .then((data) => {
+              console.log("Server response:", data);
+              showAlert(`"${skill}" added to your To-Do`);
+            })
+            .catch((err) => {
+              console.error("Error:", err);
+              showAlert("Failed to add skill");
+            });
+        }
 
-      function addTargetJob(jobTitle) {
-        fetch("/add-target-job", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ job_title: jobTitle })
-        })
-          .then(res => res.json())
-          .then(data => {
-            console.log("Server response:", data);
-            showAlert(`"${jobTitle}" added to your Target Jobs!`);
+        function addTargetJob(jobTitle) {
+          fetch("/add-target-job", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ job_title: jobTitle }),
           })
-          .catch(err => {
-            console.error("Error:", err);
-            showAlert("Failed to add job!");
-          });
+            .then((res) => res.json())
+            .then((data) => {
+              console.log("Server response:", data);
+              showAlert(`"${jobTitle}" added to your Target Jobs!`);
+            })
+            .catch((err) => {
+              console.error("Error:", err);
+              showAlert("Failed to add job!");
+            });
+        }
 
-      }
+        function showAlert(message, duration = 2000) {
+          const alertBox = document.getElementById("custom-alert");
+          const alertText = document.getElementById("alert-text");
 
-      function showAlert(message, duration = 2000) {
-        const alertBox = document.getElementById("custom-alert");
-        const alertText = document.getElementById("alert-text");
+          alertText.textContent = message;
+          alertBox.classList.remove("hidden");
 
-        alertText.textContent = message;
-        alertBox.classList.remove("hidden");
-
-        setTimeout(() => {
-          alertBox.classList.add("hidden");
-        }, duration);
-      }
-
-    </script>
-
-</body>
-
+          setTimeout(() => {
+            alertBox.classList.add("hidden");
+          }, duration);
+        }
+      </script>
+    </div>
+  </body>
 </html>
