@@ -45,15 +45,6 @@
 
           <li>
             <a
-              href="{{ url_for('dashboard') }}"
-              class="{{ 'active' if request.endpoint == 'dashboard' else '' }}"
-            >
-              Dashboard
-            </a>
-          </li>
-
-          <li>
-            <a
               href="{{ url_for('about') }}"
               class="{{ 'active' if request.endpoint == 'about' else '' }}"
             >
@@ -61,7 +52,15 @@
             </a>
           </li>
         </ul>
-        <button class="sign-btn">Sign Up / Login</button>
+
+        <div class="nav-buttons">
+          <a href="{{ url_for('dashboard') }}" class="sign-btn">Dashboard</a>
+          {% if current_user.is_authenticated %}
+          <a href="{{ url_for('logout') }}" class="sign-btn">Logout</a>
+          {% else %}
+          <a href="{{ url_for('login') }}" class="sign-btn">Login / Sign Up</a>
+          {% endif %}
+        </div>
       </nav>
 
       <div class="main-content">
@@ -73,27 +72,36 @@
             related job roles.
           </p>
         </section>
+        <!-- Progress Bar -->
+        <div id="progress-bar-container">
+          <div id="progress-bar"></div>
+        </div>
 
         <!-- Search Section -->
         <section class="content">
           <div class="search-bar">
-            <input
-              type="text"
-              id="jobInput"
-              placeholder="Enter job title (e.g. Data Analyst)"
-            />
-            <input
-              type="number"
-              id="topN"
-              min="1"
-              max="10"
-              value="5"
-              class="topn-input"
-            />
-            <button class="btn" onclick="searchSkills()">Search</button>
+            <div class="autocomplete-wrapper">
+              <input
+                type="text"
+                id="jobInput"
+                placeholder="Enter job title (e.g. Data Analyst)"
+                autocomplete="off"
+                oninput="handleJobInput(this.value)"
+                onkeydown="handleJobKeydown(event)"
+              />
+              <div class="autocomplete-list" id="jobs-autocomplete"></div>
+              <input
+                type="number"
+                id="topN"
+                min="1"
+                max="10"
+                value="10"
+                class="topn-input"
+              />
+              <button class="btn" onclick="searchSkills()">Search</button>
+            </div>
           </div>
 
-          <!-- Results -->
           <div id="results" class="results-container"></div>
         </section>
       </div>
@@ -105,7 +113,7 @@
       <!-- Footer -->
       <footer>
         <p class="footer-logo">CareerPath AI</p>
-        <p id="year-text">©2025</p>
+        <p id="year-text">©2026</p>
         <div class="socials">
           <a href="#">💼</a>
           <a href="#">🔗</a>
@@ -114,14 +122,117 @@
       </footer>
 
       <script>
+        // ── Progress Bar ──
+        function startProgress() {
+          const bar = document.getElementById("progress-bar");
+          bar.style.width = "0%";
+          setTimeout(() => (bar.style.width = "70%"), 50);
+        }
+
+        function finishProgress() {
+          const bar = document.getElementById("progress-bar");
+          bar.style.width = "100%";
+          setTimeout(() => (bar.style.width = "0%"), 400);
+        }
+
+        // ── Autocomplete for Jobs ──
+        let activeIndex = -1;
+
+        function handleJobInput(value) {
+          if (value.length < 1) {
+            closeAutocomplete();
+            return;
+          }
+
+          fetch(`/autocomplete-jobs?q=${encodeURIComponent(value)}`)
+            .then((res) => res.json())
+            .then((suggestions) => {
+              activeIndex = -1;
+              renderAutocomplete(
+                "jobs-autocomplete",
+                suggestions,
+                value,
+                (selected) => {
+                  document.getElementById("jobInput").value = selected;
+                  closeAutocomplete();
+                },
+              );
+            });
+        }
+
+        function handleJobKeydown(event) {
+          const list = document.getElementById("jobs-autocomplete");
+          const items = list.querySelectorAll(".autocomplete-item");
+
+          if (event.key === "ArrowDown") {
+            activeIndex = Math.min(activeIndex + 1, items.length - 1);
+            updateActiveItem(items);
+          } else if (event.key === "ArrowUp") {
+            activeIndex = Math.max(activeIndex - 1, -1);
+            updateActiveItem(items);
+          } else if (event.key === "Enter" && activeIndex >= 0) {
+            event.preventDefault();
+            items[activeIndex].click();
+          } else if (event.key === "Escape") {
+            closeAutocomplete();
+          }
+        }
+
+        function renderAutocomplete(listId, suggestions, query, onSelect) {
+          const list = document.getElementById(listId);
+          list.innerHTML = "";
+
+          if (suggestions.length === 0) {
+            list.classList.remove("show");
+            return;
+          }
+
+          suggestions.forEach((item) => {
+            const div = document.createElement("div");
+            div.className = "autocomplete-item";
+            const regex = new RegExp(`(${query})`, "gi");
+            div.innerHTML = item.replace(
+              regex,
+              '<span class="highlight">$1</span>',
+            );
+            div.addEventListener("click", () => onSelect(item));
+            list.appendChild(div);
+          });
+
+          list.classList.add("show");
+        }
+
+        function updateActiveItem(items) {
+          items.forEach((item, i) => {
+            item.classList.toggle("active", i === activeIndex);
+          });
+        }
+
+        function closeAutocomplete() {
+          document.querySelectorAll(".autocomplete-list").forEach((l) => {
+            l.classList.remove("show");
+            l.innerHTML = "";
+          });
+          activeIndex = -1;
+        }
+
+        document.addEventListener("click", (e) => {
+          if (!e.target.closest(".autocomplete-wrapper")) {
+            closeAutocomplete();
+          }
+        });
+
         async function searchSkills() {
           const jobTitle = document.getElementById("jobInput").value.trim();
-          const topN = parseInt(document.getElementById("topN").value) || 5;
+          const topN = parseInt(document.getElementById("topN").value) || 10;
 
           if (!jobTitle) {
             alert("Please enter a job title!");
             return;
           }
+
+          closeAutocomplete();
+          startProgress();
 
           const response = await fetch("/recommend_skills", {
             method: "POST",
@@ -130,6 +241,9 @@
           });
 
           const data = await response.json();
+
+          finishProgress();
+
           const resultsDiv = document.getElementById("results");
           resultsDiv.innerHTML = "";
 
@@ -154,7 +268,7 @@
                 (skill) => `
             <span class="skill-tag">
               ${skill.trim()}
-              <button class="add-btn" onclick="this.disabled=true; addToTodo('${skill.trim()}')">+</button>
+              <button class="add-btn" data-skill="${skill.trim().replace(/"/g, '&quot;')}" onclick="addToTodo(this)">+</button>
             </span>
             `,
               )
@@ -168,8 +282,8 @@
               <h3 class="job-title">
                 Skills required for ${data["Job Title"]}
               </h3>
-              <button class="job-add"
-                onclick="addTargetJob('${data["Job Title"]}')">
+                <button class="job-add" data-job="${data["Job Title"].replace(/'/g, "&apos;").replace(/"/g, '&quot;')}"
+                  onclick="addTargetJob(this)">
                 ⭐ Add to Target Jobs
               </button>
             </div>
@@ -180,7 +294,7 @@
                   (skill) => `
                 <span class="skill-tag">
                   ${skill}
-                  <button class="add-btn" onclick="this.disabled=true; addToTodo('${skill}')">+</button>
+                  <button class="add-btn" data-skill="${skill.replace(/"/g, '&quot;')}" onclick="addToTodo(this)">+</button>
                 </span>
               `,
                 )
@@ -217,7 +331,7 @@
                 <p class='job-details-block'><h4 class='job-outline'>📄 Description:</h4>${job["Job Description"] || "N/A"}</p>
                 <p class='job-details-block'><h4 class='job-outline'>🧠 Required Skills:</h4> ${job["Skills"]}</p>
                 <p class='job-details-block'><h4 class='job-outline'>📜 Certifications:</h4> ${job["Certifications"] || "N/A"}</p>
-                <button class="job-add" onclick="addTargetJob('${job["Job Title"]}')"> ⭐ Add to Target Jobs </button>
+                <button class="job-add" data-job="${job["Job Title"].replace(/'/g, "&apos;").replace(/"/g, '&quot;')}" onclick="addTargetJob(this)"> ⭐ Add to Target Jobs </button>
               </div>
             </div>
           `;
@@ -238,7 +352,10 @@
           }
         }
 
-        function addToTodo(skill) {
+        function addToTodo(button) {
+          const skill = button.dataset.skill;
+          button.disabled = true;
+          button.textContent = "✓";
           fetch("/add-to-todo", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -251,11 +368,16 @@
             })
             .catch((err) => {
               console.error("Error:", err);
+              button.disabled = false;
+              button.textContent = "+";
               showAlert("Failed to add skill");
             });
         }
 
-        function addTargetJob(jobTitle) {
+        function addTargetJob(button) {
+          const jobTitle = button.dataset.job;
+          button.disabled = true;
+          button.textContent = "✓ Added";
           fetch("/add-target-job", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -268,6 +390,8 @@
             })
             .catch((err) => {
               console.error("Error:", err);
+              button.disabled = false;
+              button.textContent = "⭐ Add to Target Jobs";
               showAlert("Failed to add job!");
             });
         }

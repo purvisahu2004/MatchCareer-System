@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - MatchCareer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <h1 class="logo">CareerPath AI</h1>
+        <ul class="nav-links">
+            <li>
+                <a href="{{ url_for('index') }}" class="{{ 'active' if request.endpoint == 'index' else '' }}">
+                    Home
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('jobs') }}" class="{{ 'active' if request.endpoint == 'jobs' else '' }}">
+                    Find Skills
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('skills') }}" class="{{ 'active' if request.endpoint == 'skills' else '' }}">
+                    Find Jobs
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('about') }}" class="{{ 'active' if request.endpoint == 'about' else '' }}">
+                    About
+                </a>
+            </li>
+        </ul>
+        <div class="nav-buttons">
+            <a href="{{ url_for('dashboard') }}" class="sign-btn">Dashboard</a>
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('logout') }}" class="sign-btn">Logout</a>
+            {% else %}
+            <a href="{{ url_for('login') }}" class="sign-btn">Login / Sign Up</a>
+            {% endif %}
+        </div>
+    </nav>    
+
+    <main class="page-container">
+        <div class="auth-container">
+            <div class="auth-card">
+                <h2>Login to Your Account</h2>
+                <form method="POST" class="auth-form">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Login</button>
+                </form>
+                <p class="auth-link">Don't have an account? <a href="{{ url_for('register') }}">Register here</a></p>
+            </div>
+        </div>
+    </main>
+
+</body>
+</html>

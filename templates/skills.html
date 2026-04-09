@@ -45,15 +45,6 @@
 
           <li>
             <a
-              href="{{ url_for('dashboard') }}"
-              class="{{ 'active' if request.endpoint == 'dashboard' else '' }}"
-            >
-              Dashboard
-            </a>
-          </li>
-
-          <li>
-            <a
               href="{{ url_for('about') }}"
               class="{{ 'active' if request.endpoint == 'about' else '' }}"
             >
@@ -61,7 +52,15 @@
             </a>
           </li>
         </ul>
-        <button class="sign-btn">Sign Up / Login</button>
+
+        <div class="nav-buttons">
+          <a href="{{ url_for('dashboard') }}" class="sign-btn">Dashboard</a>
+          {% if current_user.is_authenticated %}
+          <a href="{{ url_for('logout') }}" class="sign-btn">Logout</a>
+          {% else %}
+          <a href="{{ url_for('login') }}" class="sign-btn">Login / Sign Up</a>
+          {% endif %}
+        </div>
       </nav>
 
       <div class="main-content">
@@ -71,33 +70,39 @@
           <p>Enter your skills to discover matching job roles.</p>
         </section>
 
+        <!-- Progress Bar -->
+        <div id="progress-bar-container">
+          <div id="progress-bar"></div>
+        </div>
+
         <!-- Search Section -->
         <section class="content">
           <div class="search-bar">
-            <input
-              type="text"
-              id="skillsInput"
-              list="skillsList"
-              placeholder="Enter skills (comma separated)..."
-              autocomplete="off"
-            />
-            <datalist id="skillsList"></datalist>
-
-            <input
+            <div class="autocomplete-wrapper">
+              <input
+                type="text"
+                id="skillsInput"
+                placeholder="Enter skills (comma separated)..."
+                autocomplete="off"
+                oninput="handleSkillInput(this.value)"
+                onkeydown="handleSkillKeydown(event)"
+              />
+              <div class="autocomplete-list" id="skills-autocomplete"></div>
+              <input
               type="number"
               id="topN"
               min="1"
               max="20"
-              value="5"
+              value="10"
               class="topn-input"
               title="Number of jobs to show"
-            />
-            <button type="button" class="btn" onclick="searchJobs()">
-              Search
-            </button>
+              />
+              <button type="button" class="btn" onclick="searchJobs()">
+                Search
+              </button>
+            </div>
           </div>
 
-          <!-- Results Area -->
           <div id="results" class="results-container"></div>
         </section>
       </div>
@@ -109,7 +114,7 @@
       <!-- Footer -->
       <footer>
         <p class="footer-logo">CareerPath AI</p>
-        <p id="year-text">©2025</p>
+        <p id="year-text">©2026</p>
         <div class="socials">
           <a href="#">💼</a>
           <a href="#">🔗</a>
@@ -119,16 +124,133 @@
 
       <!-- JavaScript -->
       <script>
+        // ── Progress Bar ──
+        function startProgress() {
+          const bar = document.getElementById("progress-bar");
+          bar.style.width = "0%";
+          setTimeout(() => (bar.style.width = "70%"), 50);
+        }
+
+        function finishProgress() {
+          const bar = document.getElementById("progress-bar");
+          bar.style.width = "100%";
+          setTimeout(() => (bar.style.width = "0%"), 400);
+        }
+
+        // ── Autocomplete for Skills ──
+        let skillSuggestions = [];
+        let activeIndex = -1;
+
+        function handleSkillInput(value) {
+          // Get the last skill being typed (after last comma)
+          const parts = value.split(",");
+          const lastPart = parts[parts.length - 1].trim();
+
+          if (lastPart.length < 1) {
+            closeAutocomplete();
+            return;
+          }
+
+          fetch(`/autocomplete-skills?q=${encodeURIComponent(lastPart)}`)
+            .then((res) => res.json())
+            .then((suggestions) => {
+              skillSuggestions = suggestions;
+              activeIndex = -1;
+              renderAutocomplete(
+                "skills-autocomplete",
+                suggestions,
+                lastPart,
+                (selected) => {
+                  // Replace last typed part with selected suggestion
+                  parts[parts.length - 1] = " " + selected;
+                  document.getElementById("skillsInput").value =
+                    parts.join(",") + ", ";
+                  closeAutocomplete();
+                },
+              );
+            });
+        }
+
+        function handleSkillKeydown(event) {
+          const list = document.getElementById("skills-autocomplete");
+          const items = list.querySelectorAll(".autocomplete-item");
+
+          if (event.key === "ArrowDown") {
+            activeIndex = Math.min(activeIndex + 1, items.length - 1);
+            updateActiveItem(items);
+          } else if (event.key === "ArrowUp") {
+            activeIndex = Math.max(activeIndex - 1, -1);
+            updateActiveItem(items);
+          } else if (event.key === "Enter" && activeIndex >= 0) {
+            event.preventDefault();
+            items[activeIndex].click();
+          } else if (event.key === "Escape") {
+            closeAutocomplete();
+          }
+        }
+
+        // ── Autocomplete Renderer ──
+        function renderAutocomplete(listId, suggestions, query, onSelect) {
+          const list = document.getElementById(listId);
+          list.innerHTML = "";
+
+          if (suggestions.length === 0) {
+            list.classList.remove("show");
+            return;
+          }
+
+          suggestions.forEach((item, index) => {
+            const div = document.createElement("div");
+            div.className = "autocomplete-item";
+
+            // Highlight matching part
+            const regex = new RegExp(`(${query})`, "gi");
+            div.innerHTML = item.replace(
+              regex,
+              '<span class="highlight">$1</span>',
+            );
+
+            div.addEventListener("click", () => onSelect(item));
+            list.appendChild(div);
+          });
+
+          list.classList.add("show");
+        }
+
+        function updateActiveItem(items) {
+          items.forEach((item, i) => {
+            item.classList.toggle("active", i === activeIndex);
+          });
+        }
+
+        function closeAutocomplete() {
+          document.querySelectorAll(".autocomplete-list").forEach((l) => {
+            l.classList.remove("show");
+            l.innerHTML = "";
+          });
+          activeIndex = -1;
+        }
+
+        // Close autocomplete when clicking outside
+        document.addEventListener("click", (e) => {
+          if (!e.target.closest(".autocomplete-wrapper")) {
+            closeAutocomplete();
+          }
+        });
+
+        // ── Search Jobs ──
         async function searchJobs() {
           const skillsInput = document.getElementById("skillsInput").value;
           const topN = parseInt(document.getElementById("topN").value) || 5;
 
           if (!skillsInput.trim()) {
-            alert("Please enter at least one skill!");
+            showAlert("Please enter at least one skill!");
             return;
           }
 
-          // Format user-entered skills nicely
+          closeAutocomplete();
+          startProgress();
+
           const formattedUserSkills = skillsInput
             .split(",")
             .map((skill) => skill.trim())
@@ -146,6 +268,8 @@
           });
 
           const data = await response.json();
+          finishProgress();
+
           const resultsDiv = document.getElementById("results");
           resultsDiv.innerHTML = "";
 
@@ -153,17 +277,15 @@
             if (!skillsString || skillsString === "None") {
               return '<span style="color:green;">None 🎉</span>';
             }
-
             const skills = skillsString.split(",").map((s) => s.trim());
-
             return skills
               .map(
                 (skill) => `
-                  <span class="skill-tag">
-                    ${skill}
-                    <button class="add-btn" onclick="this.disabled=true; addToTodo('${skill}')">+</button>
-                  </span>
-                `,
+        <span class="skill-tag">
+          ${skill}
+          <button class="add-btn" data-skill="${skill.replace(/"/g, '&quot;')}" onclick="addToTodo(this)">+</button>
+        </span>
+      `,
               )
               .join("");
           }
@@ -172,9 +294,7 @@
             resultsDiv.innerHTML =
               "<p class='no-results'>❌ No matching jobs found.</p>";
           } else {
-            const topResults = data.slice(0, topN);
-
-            topResults.forEach((job, index) => {
+            data.slice(0, topN).forEach((job, index) => {
               const matchColor =
                 job["Match_%"] >= 80
                   ? "green"
@@ -183,32 +303,28 @@
                     : "red";
 
               resultsDiv.innerHTML += `
-                <div class="job-card">
-                  <div class="job-header">
-                    <span class="job-number">#${index + 1}</span>
-                    <div class="job-header-main">
-                      <h3 class="job-title">${job["Job Title"]}</h3>
-                      <button class="toggle-btn" onclick="toggleDetails(this)">Show Details</button>
-                    </div>
-                    <span class="match-percent" style="background-color:${matchColor}">${job["Match_%"]}%</span>
-                  </div>
-                
-                  <div class="job-details" style="display:none;">
-                    <p class='job-details-block'><h4 class='job-outline'>📄 Description:</h4>${job["Job Description"] || "N/A"}</p>
-                    <p class='job-details-block'><h4 class='job-outline'>🧠 Required Skills:</h4> ${job["Skills"]}</p>
-                    <p class='job-details-block'><h4 class='job-outline'>🧠 Your Skills:</h4> ${formattedUserSkills}</p>
-                    <p class='job-details-block'><h4 class='job-outline'>❌ Missing Skills:</h4></p>
-                    <div class="skill-tags">
-                      ${renderMissingSkills(job["Missing_Skills"])}
-                    </div>
-                    <p class='job-details-block'><h4 class='job-outline'>📜 Certifications:</h4> ${job["Certifications"] || "N/A"}</p>
-                    <button class="job-add" onclick="addTargetJob('${job["Job Title"]}')">
-                    ⭐ Add to Target Jobs
-                    </button>
-                  
-                  </div>
-                </div>
-              `;
+          <div class="job-card">
+            <div class="job-header">
+              <span class="job-number">#${index + 1}</span>
+              <div class="job-header-main">
+                <h3 class="job-title">${job["Job Title"]}</h3>
+                <button class="toggle-btn" onclick="toggleDetails(this)">Show Details</button>
+              </div>
+              <span class="match-percent" style="background-color:${matchColor}">${job["Match_%"]}%</span>
+            </div>
+            <div class="job-details" style="display:none;">
+              <p class='job-details-block'><h4 class='job-outline'>📄 Description:</h4>${job["Job Description"] || "N/A"}</p>
+              <p class='job-details-block'><h4 class='job-outline'>🧠 Required Skills:</h4> ${job["Skills"]}</p>
+              <p class='job-details-block'><h4 class='job-outline'>🧠 Your Skills:</h4> ${formattedUserSkills}</p>
+              <p class='job-details-block'><h4 class='job-outline'>❌ Missing Skills:</h4></p>
+              <div class="skill-tags">${renderMissingSkills(job["Missing_Skills"])}</div>
+              <p class='job-details-block'><h4 class='job-outline'>📜 Certifications:</h4> ${job["Certifications"] || "N/A"}</p>
+              <button class="job-add" data-job="${job["Job Title"].replace(/'/g, "&apos;").replace(/"/g, '&quot;')}" onclick="addTargetJob(this)">
+                ⭐ Add to Target Jobs
+              </button>
+            </div>
+          </div>
+        `;
             });
           }
         }
@@ -225,36 +341,38 @@
           }
         }
 
-        function addToTodo(skill) {
+        function addToTodo(button) {
+          const skill = button.dataset.skill;
+          button.disabled = true;
+          button.textContent = "✓";
           fetch("/add-to-todo", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ skill }),
           })
             .then((res) => res.json())
-            .then((data) => {
-              console.log("Server response:", data);
-              showAlert(`"${skill}" added to your To-Do`);
-            })
-            .catch((err) => {
-              console.error("Error:", err);
+            .then(() => showAlert(`"${skill}" added to your To-Do`))
+            .catch(() => {
+              button.disabled = false;
+              button.textContent = "+";
               showAlert("Failed to add skill");
             });
         }
 
-        function addTargetJob(jobTitle) {
+        function addTargetJob(button) {
+          const jobTitle = button.dataset.job;
+          button.disabled = true;
+          button.textContent = "✓ Added";
           fetch("/add-target-job", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ job_title: jobTitle }),
           })
             .then((res) => res.json())
-            .then((data) => {
-              console.log("Server response:", data);
-              showAlert(`"${jobTitle}" added to your Target Jobs!`);
-            })
-            .catch((err) => {
-              console.error("Error:", err);
+            .then(() => showAlert(`"${jobTitle}" added to Target Jobs!`))
+            .catch(() => {
+              button.disabled = false;
+              button.textContent = "⭐ Add to Target Jobs";
               showAlert("Failed to add job!");
             });
         }
@@ -262,13 +380,9 @@
         function showAlert(message, duration = 2000) {
           const alertBox = document.getElementById("custom-alert");
           const alertText = document.getElementById("alert-text");
-
           alertText.textContent = message;
           alertBox.classList.remove("hidden");
-
-          setTimeout(() => {
-            alertBox.classList.add("hidden");
-          }, duration);
+          setTimeout(() => alertBox.classList.add("hidden"), duration);
         }
       </script>
     </div>

@@ -35,18 +35,20 @@
         </li>
 
         <li>
-          <a href="{{ url_for('dashboard') }}" class="{{ 'active' if request.endpoint == 'dashboard' else '' }}">
-            Dashboard
-          </a>
-        </li>
-
-        <li>
           <a href="{{ url_for('about') }}" class="{{ 'active' if request.endpoint == 'about' else '' }}">
             About
           </a>
         </li>
       </ul>
-      <button class="sign-btn">Sign Up / Login</button>
+
+      <div class="nav-buttons">
+        <a href="{{ url_for('dashboard') }}" class="sign-btn">Dashboard</a>
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('logout') }}" class="sign-btn">Logout</a>
+        {% else %}
+        <a href="{{ url_for('login') }}" class="sign-btn">Login / Sign Up</a>
+        {% endif %}
+      </div>
     </nav>
 
     <div class="main-content">
@@ -152,6 +154,17 @@
             <p>Enter your skills</p>
             <p>Turn Your Skills into Job Opportunities</p>
           </div>
+          <div class="start-box">
+            {% if current_user.is_authenticated %}
+            <div><a href="{{ url_for('dashboard') }}" class="st-btn">My Dashboard</a></div>
+            <p>Track your progress</p>
+            <p>Monitor your skill development journey</p>
+            {% else %}
+            <div><a href="{{ url_for('login') }}" class="st-btn">My Dashboard</a></div>
+            <p>Track your progress</p>
+            <p>Monitor your skill development journey</p>
+            {% endif %}
+          </div>
         </div>
       </section>
     </div>
@@ -159,7 +172,7 @@
     <!-- Footer -->
     <footer>
       <p class="footer-logo">CareerPath AI</p>
-      <p id="year-text">© 2025</p>
+      <p id="year-text">© 2026</p>
       <div class="socials">
         <a href="#">💼</a>
         <a href="#">🔗</a>

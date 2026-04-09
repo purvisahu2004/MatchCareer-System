@@ -40,25 +40,24 @@
           </li>
           <li>
             <a
-              href="{{ url_for('dashboard') }}"
-              class="{{ 'active' if request.endpoint == 'dashboard' else '' }}"
-              >Dashboard</a
-            >
-          </li>
-          <li>
-            <a
               href="{{ url_for('about') }}"
               class="{{ 'active' if request.endpoint == 'about' else '' }}"
               >About</a
             >
           </li>
         </ul>
-        <button class="sign-btn">Sign Up / Login</button>
+        <div class="nav-buttons">
+          <a href="{{ url_for('dashboard') }}" class="sign-btn active">Dashboard</a>
+          <div class="auth-buttons">
+            <a href="{{ url_for('logout') }}" class="sign-btn">Logout</a>
+          </div>
+        </div>
       </nav>
 
       <div class="main-content">
         <!-- Header -->
         <section class="page-header">
+          <p>Welcome, {{ current_user.username }}!</p>
           <h2>Your Career Progress Dashboard</h2>
           <p>Track skill growth, job readiness, and gaps in one place.</p>
         </section>
@@ -99,7 +98,6 @@
               <div class="dash-card-header">
                 <h3>🎯 Target Jobs</h3>
               </div>
-
               {% if target_jobs %}
               <ul class="dash-list" id="target-jobs-list">
                 {% for job in target_jobs %}
@@ -107,7 +105,8 @@
                   <span class="dash-item-text">{{ job }}</span>
                   <button
                     class="remove-btn"
-                    onclick="removeTargetJob('{{ job }}', 'job-{{ loop.index }}')"
+                    data-job="{{ job | e }}"
+                    onclick="removeTargetJob(this)"
                   >
                     ✕
                   </button>
@@ -121,88 +120,102 @@
               </p>
               {% endif %}
             </div>
-
             <!-- To Do List -->
             <div class="dash-card">
               <div class="dash-card-header">
                 <h3>📌 Skills To Learn</h3>
-                <span class="badge" id="pending-badge"
-                  >{{ missing_skills }} pending</span
-                >
+                <span class="badge" id="pending-badge">{{ missing_skills }} pending</span>
               </div>
-
-              {% if todo or completed %}
-              <ul class="dash-list" id="todo-list">
-                <!-- Pending Skills -->
-                {% for skill in todo %}
-                <li class="dash-list-item" id="skill-{{ loop.index }}">
+            
+              <ul class="dash-list" id="pending-list">
+                {% for item in todo %}
+                <li class="dash-list-item" data-skill="{{ item.skill | e }}">
                   <input
                     type="checkbox"
                     class="skill-checkbox"
-                    onchange="toggleSkill('{{ skill }}', this)"
+                    onchange="toggleSkill(this)"
                     title="Mark as complete"
                   />
-                  <span class="dash-item-text">{{ skill }}</span>
+                  <span class="dash-item-text">{{ item.skill }}</span>
+                  {% if item.jobs %}
+                  <small class="job-chip"> {{ item.jobs | join(', ') }} </small>
+                  {% endif %}
                   <button
                     class="remove-btn"
-                    onclick="removeSkill('{{ skill }}', 'skill-{{ loop.index }}')"
-                  >
-                    ✕
-                  </button>
-                </li>
-                {% endfor %}
-
-                <!-- Completed Skills -->
-                {% for skill in completed %}
-                <li
-                  class="dash-list-item completed-item"
-                  id="done-{{ loop.index }}"
-                >
-                  <input
-                    type="checkbox"
-                    class="skill-checkbox"
-                    checked
-                    onchange="toggleSkill('{{ skill }}', this)"
-                    title="Mark as incomplete"
-                  />
-                  <span class="dash-item-text done-text">{{ skill }}</span>
-                  <button
-                    class="remove-btn"
-                    onclick="removeSkill('{{ skill }}', 'done-{{ loop.index }}')"
+                    onclick="removeSkill(this)"
                   >
                     ✕
                   </button>
                 </li>
                 {% endfor %}
               </ul>
-              {% else %}
-              <p class="empty-msg">
+              <ul class="dash-list" id="completed-list">
+                {% for item in completed %}
+                <li class="dash-list-item completed-item" data-skill="{{ item.skill | e }}">
+                  <input
+                    type="checkbox"
+                    class="skill-checkbox"
+                    checked
+                    onchange="toggleSkill(this)"
+                    title="Mark as incomplete"
+                  />
+                  <span class="dash-item-text done-text">{{ item.skill }}</span>
+                  {% if item.jobs %}
+                  <small class="job-chip"> {{ item.jobs | join(', ') }}</small>
+                  {% endif %}
+                  <button
+                    class="remove-btn"
+                    onclick="removeSkill(this)"
+                  >
+                    ✕
+                  </button>
+                </li>
+                {% endfor %}
+              </ul>
+            
+              <p class="empty-msg {% if todo or completed %}hidden{% endif %}" id="empty-msg">
                 No skills added yet. Go to
                 <a href="{{ url_for('skills') }}">Find Jobs</a> or
                 <a href="{{ url_for('jobs') }}">Find Skills</a> to add missing
                 skills!
               </p>
-              {% endif %}
             </div>
           </div>
-
           <!-- RIGHT SIDE: Charts -->
           <div class="dashboard-right">
-            <!-- Donut Chart: Overall Readiness -->
+          
+            <!-- PIE CHART -->
             <div class="dash-card chart-card">
-              <h3>📊 Overall Readiness</h3>
-              <div id="donut-chart"></div>
+              <h3>🧠 Skill Completion</h3>
+              {% if pie_chart %}
+                {{ pie_chart | safe }}
+              {% else %}
+                <p class="empty-msg">Add skills to see progress.</p>
+              {% endif %}
             </div>
+          
+            <!-- JOB MATCH BAR -->
+            <div class="dash-card chart-card">
+              <h3>📊 Job Match Progress</h3>
+              {% if match_chart %}
+                {{ match_chart | safe }}
+              {% else %}
+                <p class="empty-msg">Add target jobs to see match.</p>
+              {% endif %}
+            </div>
+          
+            
+            <!-- Target Jobs Chart -->
+            {% if hbar_chart %}
+            <section class="dash-card" style="margin: 0 20px 20px 20px;">
+              <h3>📈 Skill Progress per Job</h3>
+              {{ hbar_chart | safe }}
+            </section>
+            {% endif %}    
           </div>
         </section>
-        <!-- Bar Chart: Skills Breakdown -->
-        <div class="dash-card chart-card">
-          <h3>📈 Skills Breakdown</h3>
-          <div id="bar-chart"></div>
-        </div>
-      </div>
-
-      <!-- Custom Alert -->
+        
+        <!-- Custom Alert -->
       <div id="custom-alert" class="custom-alert hidden">
         <span id="alert-text"></span>
       </div>
@@ -210,7 +223,7 @@
       <!-- Footer -->
       <footer>
         <p class="footer-logo">CareerPath AI</p>
-        <p id="year-text">©2025</p>
+        <p id="year-text">©2026</p>
         <div class="socials">
           <a href="#">💼</a>
           <a href="#">🔗</a>
@@ -220,121 +233,10 @@
     </div>
 
     <script>
-      // ── Data from Flask ──
-      let todoSkills = JSON.parse("{{ todo | tojson | safe }}");
-      let completedSkills = JSON.parse("{{ completed | tojson | safe }}");
-      let totalSkills = todoSkills.length + completedSkills.length;
-      let percent =
-        totalSkills > 0
-          ? Math.round((completedSkills.length / totalSkills) * 100)
-          : 0;
-
-      // ── Draw Charts on Load ──
-      window.onload = function () {
-        drawDonut(percent);
-        drawBar(completedSkills.length, todoSkills.length);
-      };
-
-      // ── Donut Chart ──
-      function drawDonut(percent) {
-        const done = percent;
-        const remaining = 100 - percent;
-
-        const data = [
-          {
-            type: "pie",
-            hole: 0.6,
-            values: [done, remaining],
-            labels: ["Completed", "Remaining"],
-            marker: {
-              colors: ["#4CAF50", "#e0e0e0"],
-            },
-            textinfo: "none",
-          },
-        ];
-
-        const layout = {
-          showlegend: true,
-          margin: { t: 10, b: 10, l: 10, r: 10 },
-          height: 250,
-          annotations: [
-            {
-              font: { size: 22, color: "#333" },
-              showarrow: false,
-              text: `${percent}%`,
-              x: 0.5,
-              y: 0.5,
-            },
-          ],
-          paper_bgcolor: "rgba(0,0,0,0)",
-          plot_bgcolor: "rgba(0,0,0,0)",
-        };
-
-        Plotly.newPlot("donut-chart", data, layout, {
-          responsive: true,
-          displayModeBar: false,
-        });
-      }
-
-      // ── Bar Chart ──
-      function drawBar(completed, pending) {
-        const data = [
-          {
-            type: "bar",
-            x: ["Completed", "Pending"],
-            y: [completed, pending],
-            marker: {
-              color: ["#4CAF50", "#FF7043"],
-            },
-            text: [completed, pending],
-            textposition: "auto",
-          },
-        ];
-
-        const layout = {
-          margin: { t: 10, b: 40, l: 30, r: 10 },
-          height: 250,
-          yaxis: { title: "Skills Count" },
-          paper_bgcolor: "rgba(0,0,0,0)",
-          plot_bgcolor: "rgba(0,0,0,0)",
-        };
-
-        Plotly.newPlot("bar-chart", data, layout, {
-          responsive: true,
-          displayModeBar: false,
-        });
-      }
-
-      // ── Update Charts + Stats ──
-      function refreshDashboard() {
-        fetch("/get-session-data")
-          .then((res) => res.json())
-          .then((data) => {
-            todoSkills = data.todo;
-            completedSkills = data.completed;
-            const total = todoSkills.length + completedSkills.length;
-            const pct = data.percent;
-
-            // Update stat cards
-            document.getElementById("stat-total").textContent = total;
-            document.getElementById("stat-completed").textContent =
-              completedSkills.length;
-            document.getElementById("stat-pending").textContent =
-              todoSkills.length;
-            document.getElementById("stat-jobs").textContent =
-              data.target_jobs.length;
-            document.getElementById("stat-percent").textContent = pct + "%";
-            document.getElementById("pending-badge").textContent =
-              todoSkills.length + " pending";
-
-            // Redraw charts
-            drawDonut(pct);
-            drawBar(completedSkills.length, todoSkills.length);
-          });
-      }
-
       // ── Toggle Skill Complete/Incomplete ──
-      function toggleSkill(skill, checkbox) {
+      function toggleSkill(checkbox) {
+        const li = checkbox.closest('li');
+        const skill = li.dataset.skill;
         const route = checkbox.checked ? "/mark-complete" : "/mark-incomplete";
 
         fetch(route, {
@@ -345,25 +247,44 @@
           .then((res) => res.json())
           .then((data) => {
             if (data.status === "success") {
-              // Update visual
-              const li = checkbox.closest("li");
-              const textSpan = li.querySelector(".dash-item-text");
               if (checkbox.checked) {
-                li.classList.add("completed-item");
-                textSpan.classList.add("done-text");
-                showAlert(`✅ "${skill}" marked as complete!`);
+                // Move to completed
+                const completedList = document.getElementById('completed-list');
+                li.classList.add('completed-item');
+                checkbox.title = "Mark as incomplete";
+                const span = li.querySelector('.dash-item-text');
+                span.classList.add('done-text');
+                completedList.appendChild(li);
               } else {
-                li.classList.remove("completed-item");
-                textSpan.classList.remove("done-text");
-                showAlert(`↩️ "${skill}" moved back to pending`);
+                // Move to pending
+                const pendingList = document.getElementById('pending-list');
+                li.classList.remove('completed-item');
+                checkbox.title = "Mark as complete";
+                const span = li.querySelector('.dash-item-text');
+                span.classList.remove('done-text');
+                pendingList.appendChild(li);
               }
-              refreshDashboard();
+              showAlert(`✅ "${skill}" updated`);
+              setTimeout(() => window.location.reload(), 300);
+            } else {
+              showAlert("Failed to update skill status");
+              // Revert checkbox
+              checkbox.checked = !checkbox.checked;
             }
+          })
+          .catch((err) => {
+            console.error(err);
+            showAlert("Error updating skill status");
+            // Revert checkbox
+            checkbox.checked = !checkbox.checked;
           });
       }
 
       // ── Remove Skill ──
-      function removeSkill(skill, elementId) {
+      function removeSkill(button) {
+        const li = button.closest('li');
+        const skill = li.dataset.skill;
+
         fetch("/remove-skill", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -372,16 +293,24 @@
           .then((res) => res.json())
           .then((data) => {
             if (data.status === "success") {
-              const el = document.getElementById(elementId);
-              if (el) el.remove();
+              li.remove();
               showAlert(`🗑️ "${skill}" removed`);
-              refreshDashboard();
+              setTimeout(() => window.location.reload(), 300);
+            } else {
+              showAlert("Failed to remove skill");
             }
+          })
+          .catch((err) => {
+            console.error(err);
+            showAlert("Error removing skill");
           });
       }
 
       // ── Remove Target Job ──
-      function removeTargetJob(job, elementId) {
+      function removeTargetJob(button) {
+        const li = button.closest('li');
+        const job = button.dataset.job;
+
         fetch("/remove-target-job", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -390,14 +319,18 @@
           .then((res) => res.json())
           .then((data) => {
             if (data.status === "success") {
-              const el = document.getElementById(elementId);
-              if (el) el.remove();
+              li.remove();
               showAlert(`🗑️ "${job}" removed from target jobs`);
-              refreshDashboard();
+              setTimeout(() => window.location.reload(), 300);
+            } else {
+              showAlert("Failed to remove target job");
             }
+          })
+          .catch((err) => {
+            console.error(err);
+            showAlert("Error removing target job");
           });
       }
-
       // ── Custom Alert ──
       function showAlert(message, duration = 2500) {
         const alertBox = document.getElementById("custom-alert");
@@ -406,6 +339,7 @@
         alertBox.classList.remove("hidden");
         setTimeout(() => alertBox.classList.add("hidden"), duration);
       }
+
     </script>
   </body>
 </html>
