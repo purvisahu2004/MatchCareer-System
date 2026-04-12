@@ -153,6 +153,9 @@ def recommend_jobs(user_input, top_n=10):
     temp_data['Missing_Skills'] = temp_data['Skills'].apply(lambda x: find_missing(x, user_input_clean))
     return temp_data.sort_values(by='Match_%', ascending=False).head(top_n)
 
+# ...existing code...
+
+# ...existing code...
 
 def recommend_skills(job_title, top_n=10):
     job_vector = job_title_vectorizer.transform([job_title.lower()])
@@ -162,6 +165,10 @@ def recommend_skills(job_title, top_n=10):
     temp['Match_%'] = (similarity * 100).round(2)
 
     top_jobs = temp.sort_values(by='Match_%', ascending=False).head(top_n)
+
+    # Check if the highest match is below a threshold (e.g., 20%)
+    if top_jobs['Match_%'].max() < 20:
+        return {"message": "I don't have data about this job title."}
 
     # collect skills
     skills_set = set()
@@ -182,6 +189,10 @@ def recommend_skills(job_title, top_n=10):
             ]
         ]
     }
+
+# ...existing code...
+
+# ...existing code...
 
 
 def normalize_session_skill_items(items):
@@ -568,6 +579,8 @@ def recommend_jobs_api():
 
     return jsonify(response)
 
+# ...existing code...
+
 @app.route('/recommend_skills', methods=['POST'])
 def recommend_skills_api():
     data_json = request.get_json()
@@ -579,6 +592,9 @@ def recommend_skills_api():
 
     result = recommend_skills(job_title, top_n=top_n)
 
+    if "message" in result:
+        return jsonify({"message": result["message"]})
+
     response = {
         "Job Title": result["Job Title"],
         "Recommended Skills": result["Recommended Skills"],
@@ -586,6 +602,8 @@ def recommend_skills_api():
     }
 
     return jsonify(response)
+
+# ...existing code...
 
 @app.route('/autocomplete-skills')
 def autocomplete_skills():
