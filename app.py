@@ -26,13 +26,13 @@ db_password = quote_plus(os.getenv('DB_PASSWORD', ''))
 
 # Try MySQL first, fallback to SQLite for development
 try:
-    app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://{os.getenv('DB_USER')}:{db_password}@{os.getenv('DB_HOST')}/{os.getenv('DB_NAME')}"
+    app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'matchcareer.db')}"
     # Test the connection
     from sqlalchemy import create_engine, text
     engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
     with engine.connect() as conn:
         conn.execute(text("SELECT 1"))
-    print("Connected to MySQL successfully!")
+    print("Connected to SQLlite successfully!")
 except Exception as e:
     print(f"MySQL connection failed: {e}")
     print("Falling back to SQLite for development...")
