@@ -168,7 +168,7 @@ def recommend_skills(job_title, top_n=10):
 
     # Check if the highest match is below a threshold (e.g., 20%)
     if top_jobs['Match_%'].max() < 20:
-        return {"message": "I don't have data about this job title."}
+        return {"message": "No such job found."}
 
     # collect skills
     skills_set = set()
@@ -588,7 +588,7 @@ def recommend_skills_api():
     top_n = int(data_json.get('top_n', 10))  # ← read from request
 
     if not job_title:
-        return jsonify({})
+        return jsonify({"message": "Please enter a job title."})
 
     result = recommend_skills(job_title, top_n=top_n)
 

@@ -247,6 +247,12 @@
           const resultsDiv = document.getElementById("results");
           resultsDiv.innerHTML = "";
 
+          if (data.message) {
+            resultsDiv.innerHTML =
+              `<p class='no-results'>❌ ${data.message}</p>`;
+            return;
+          }
+
           if (
             !data["Recommended Skills"] ||
             data["Recommended Skills"].length === 0
