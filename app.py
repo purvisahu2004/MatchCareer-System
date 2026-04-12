@@ -17,8 +17,11 @@ from urllib.parse import quote_plus
 # Load environment variables
 load_dotenv()
 
-# Initialize Flask App
-app = Flask(__name__)
+# Initialize Flask App with explicit static and template folders
+app = Flask(__name__, 
+    static_folder=os.path.join(os.path.dirname(__file__), 'Static'),
+    static_url_path='/static',
+    template_folder=os.path.join(os.path.dirname(__file__), 'templates'))
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'Unzila_MatchCareer')
 
 # Properly encode database password to handle special characters
